@@ -119,7 +119,8 @@ async function boot() {
  });
  $('#share').addEventListener('click',async()=>{
   const url=new URL(location.href);url.search=writeState(state);url.hash='';
-  try{await navigator.clipboard.writeText(url.href);history.replaceState(null,'',url);toast('Your ocean’s link is copied');}catch{toast('Copy the link from your address bar');history.replaceState(null,'',url);}
+  history.replaceState(null,'',url);
+  try{await navigator.clipboard.writeText(url.href);toast('Your ocean’s link is copied');}catch{toast('Copy the link from your address bar');}
  });
  document.addEventListener('keydown',e=>{
   if(e.target.matches('input,select,button')||$('#about').open)return;
