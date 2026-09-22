@@ -22,15 +22,20 @@ if (renderer) boot().catch(error=>{console.error(error);$('#loading').hidden=tru
 
 async function boot() {
  renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));
- renderer.setSize(innerWidth,innerHeight);
+ const viewport=$('#app');
+ let width=viewport.clientWidth,height=viewport.clientHeight;
+ renderer.setSize(width,height,false);
  renderer.toneMapping=THREE.ACESFilmicToneMapping;
  renderer.toneMappingExposure=1.08;
  renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFShadowMap;
  renderer.outputColorSpace=THREE.SRGBColorSpace;
  const scene=new THREE.Scene();
- const camera=new THREE.PerspectiveCamera(48,innerWidth/innerHeight,.2,6000);
+ const camera=new THREE.PerspectiveCamera(48,width/height,.2,6000);
+ // Keep the same perspective and orbit angle, with room for the scene on tall displays.
+ const frameScale=()=>Math.max(1,1.1/(width/height));
+ let framing=frameScale();
  const controls=new OrbitControls(camera,canvas);
- controls.enableDamping=true;controls.dampingFactor=.065;controls.minDistance=8;controls.maxDistance=200;
+ controls.enableDamping=true;controls.dampingFactor=.065;controls.minDistance=8;controls.maxDistance=200*framing;
  controls.maxPolarAngle=Math.PI*.484;controls.minPolarAngle=.15;controls.panSpeed=.7;controls.rotateSpeed=.45;
  controls.target.set(-8,3,-15);
  const skyTexture=await new HDRLoader().loadAsync('/assets/sky.hdr');
@@ -41,13 +46,14 @@ async function boot() {
  const ocean=createOcean(shared);scene.add(ocean.mesh);
  const targetCamera=new THREE.Vector3(),targetLook=new THREE.Vector3();let moving=false;
  const views={
-  cove:{pos:innerWidth<600?[54,23,102]:[43,17,41],target:innerWidth<600?[0,3,-10]:[-3,3,-10],kicker:'01 / THE COVE',title:'Somewhere,<br>off the map.',description:'Nothing to do. Just a sea to get lost in.'},
-  sea:{pos:[68,5,105],target:[110,2,-70],kicker:'02 / OPEN SEA',title:'Only the<br>horizon.',description:'A thousand little waves. No two quite alike.'},
-  sail:{pos:[30,10,33],target:[8,5,0],kicker:'03 / UNDER SAIL',title:'Follow<br>the wind.',description:'A little ship, with nowhere it has to be.'},
+  cove:{pos:[43,17,41],target:[-3,3,-10],kicker:'01 / THE COVE',title:'Somewhere,<br> off the map.',description:'Nothing to do. Just a sea to get lost in.'},
+  sea:{pos:[68,5,105],target:[110,2,-70],kicker:'02 / OPEN SEA',title:'Only the<br> horizon.',description:'A thousand little waves. No two quite alike.'},
+  sail:{pos:[30,10,33],target:[8,5,0],kicker:'03 / UNDER SAIL',title:'Follow<br> the wind.',description:'A little ship, with nowhere it has to be.'},
  };
  function setView(view,instant=false){
   state.view=view;const config=views[view];
   targetCamera.set(...config.pos);targetLook.set(...config.target);
+  targetCamera.sub(targetLook).multiplyScalar(framing).add(targetLook);
   if(instant){camera.position.copy(targetCamera);controls.target.copy(targetLook);controls.update();}else moving=true;
   document.querySelectorAll('[data-view]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.view===view)));
   $('#scene-kicker').textContent=config.kicker;$('#scene-title').innerHTML=config.title;$('#scene-description').textContent=config.description;
@@ -73,14 +79,17 @@ async function boot() {
  $('#quality').addEventListener('change',e=>{state.quality=e.target.value;setQuality();toast('Ocean detail updated');});setQuality();
  $('#reset').addEventListener('click',()=>setView(state.view));
  const ray=new THREE.Raycaster(),pointer=new THREE.Vector2(),plane=new THREE.Plane(new THREE.Vector3(0,1,0),0),hit=new THREE.Vector3();
- let down=null;
- canvas.addEventListener('pointerdown',e=>{down={x:e.clientX,y:e.clientY,time:performance.now()};moving=false;});
+ let down=null;const pointers=new Set();
+ canvas.addEventListener('pointerdown',e=>{pointers.add(e.pointerId);down=pointers.size===1?{x:e.clientX,y:e.clientY,time:performance.now()}:null;moving=false;});
  canvas.addEventListener('pointerup',e=>{
+  pointers.delete(e.pointerId);
   if(!down||Math.hypot(e.clientX-down.x,e.clientY-down.y)>7||performance.now()-down.time>500)return;
-  pointer.set(e.clientX/innerWidth*2-1,-e.clientY/innerHeight*2+1);ray.setFromCamera(pointer,camera);
+  const rect=canvas.getBoundingClientRect();
+  pointer.set((e.clientX-rect.left)/rect.width*2-1,-(e.clientY-rect.top)/rect.height*2+1);ray.setFromCamera(pointer,camera);
   if(ray.ray.intersectPlane(plane,hit)&&hit.distanceTo(camera.position)<250){ocean.ripple(hit.x,hit.z,elapsed);if(paused)toast('Resume the ocean to watch the ripple');}
   down=null;
  });
+ canvas.addEventListener('pointercancel',e=>{pointers.delete(e.pointerId);down=null;});
  controls.addEventListener('start',()=>moving=false);
  let last=performance.now();
  function tick(now){
@@ -110,7 +119,18 @@ async function boot() {
  renderer.compile(scene,camera);
  requestAnimationFrame(tick);
  requestAnimationFrame(()=>{renderer.render(scene,camera);$('#loading').style.opacity='0';setTimeout(()=>$('#loading').hidden=true,850);});
- window.addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);});
+ const resizeObserver=new ResizeObserver(()=>{
+  const nextWidth=viewport.clientWidth,nextHeight=viewport.clientHeight;
+  if(!nextWidth||!nextHeight||(nextWidth===width&&nextHeight===height))return;
+  width=nextWidth;height=nextHeight;
+  const nextFraming=frameScale(),ratio=nextFraming/framing;
+  camera.position.sub(controls.target).multiplyScalar(ratio).add(controls.target);
+  targetCamera.sub(targetLook).multiplyScalar(ratio).add(targetLook);
+  framing=nextFraming;controls.maxDistance=200*framing;
+  camera.aspect=width/height;camera.updateProjectionMatrix();
+  renderer.setSize(width,height,false);controls.update();
+ });
+ resizeObserver.observe(viewport);
  canvas.addEventListener('webglcontextlost',e=>{e.preventDefault();stopped=true;$('#error h1').textContent='The ocean lost its graphics context';$('#error p').textContent='Reload to bring the water back. Lowering Detail can help on a busy device.';$('#error').hidden=false;});
  $('#capture').addEventListener('click',()=>{
   renderer.render(scene,camera);canvas.toBlob(blob=>{
@@ -129,7 +149,15 @@ async function boot() {
   if(['1','2','3'].includes(e.key))setView(['cove','sea','sail'][Number(e.key)-1]);
  });
  // Read-only diagnostics for checking the real running scene, including shader failure reports.
- window.openwater={getState:()=>({...state,paused,time:elapsed,drawCalls:renderer.info.render.calls,triangles:renderer.info.render.triangles,pixelRatio:renderer.getPixelRatio(),camera:camera.position.toArray()})};
+ function screenBounds(object){
+  const box=new THREE.Box3().setFromObject(object),point=new THREE.Vector3();
+  let left=Infinity,right=-Infinity,top=Infinity,bottom=-Infinity;
+  for(const x of [box.min.x,box.max.x])for(const y of [box.min.y,box.max.y])for(const z of [box.min.z,box.max.z]){
+   point.set(x,y,z).project(camera);left=Math.min(left,(point.x+1)*width/2);right=Math.max(right,(point.x+1)*width/2);top=Math.min(top,(1-point.y)*height/2);bottom=Math.max(bottom,(1-point.y)*height/2);
+  }
+  return {left,right,top,bottom};
+ }
+ window.openwater={getState:()=>({...state,paused,time:elapsed,drawCalls:renderer.info.render.calls,triangles:renderer.info.render.triangles,pixelRatio:renderer.getPixelRatio(),camera:camera.position.toArray(),target:controls.target.toArray(),viewport:{width,height,aspect:camera.aspect,framing},bounds:{ship:screenBounds(world.ship),island:screenBounds(world.island)}})};
 }
 
 function toast(message){clearTimeout(toastTimer);$('#toast').textContent=message;$('#toast').classList.add('visible');toastTimer=setTimeout(()=>$('#toast').classList.remove('visible'),2600);}

@@ -28,6 +28,8 @@ Architecture: Vite and plain JavaScript, Three.js WebGLRenderer, a custom Gerstn
 
 Before release: `npm run check`, `npm test`, `npm run build`; browser-check desktop and 390px mobile, all weather and view presets, controls, pause, ripple, sharing, sound, and error-free shader compilation. Check visual output rather than accepting a successful build as rendering evidence. Respect reduced motion and suspend animation when hidden.
 
+Responsive behavior: size the renderer and pointer coordinates from the actual canvas container, with CSS owning its dynamic viewport height. Camera presets use aspect-based distance fitting; resizing must preserve the user's orbit and relative zoom. Keep controls within safe-area insets, scroll the settings panel at short heights, and keep captions in the footer flow. Check iPad portrait/landscape, split view, desktop resize, and a short landscape viewport; include a touch-enabled WebKit pass when available. Do not change water shaders for layout fixes.
+
 Use global `frontend-quality` and `playwright` skills for interface work, `vps-operations` for delivery, and `credentials-access` if authentication is needed. Deployment goes through the existing Deploy Manager; the app uses openwater.alirezaafshan.com. Public source and this initial deployment are authorized by the creation request; subsequent unrelated publication follows its own request.
 
 Third-party asset provenance lives in `public/assets/README.md`. Reference footage remains excluded from Git and deployment. Never add paid Water Pro assets or code without a supplied license.
