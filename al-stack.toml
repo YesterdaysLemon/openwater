@@ -1,0 +1,29 @@
+# Managed by al-stack. Keep extended prose in AGENTS.md.
+"schema" = 1
+
+["project"]
+"id" = "ceec27d0-7591-405b-b855-28c8fb450393"
+"name" = "Openwater"
+"status" = "experimental"
+"profile" = "web"
+"purpose" = "Openwater: an interactive ocean inspired by the Water Pro V3 visual reference, independently built with Three.js."
+
+["stack"]
+"version" = "0.1.0"
+"revision" = "11eac15f6a8a0dc76f06ef97c7c3a27c7f668e0a+dirty.6fb7933644af4e9c"
+
+["commands"]
+"dev" = "npm run dev"
+"build" = "npm run build"
+"check" = "npm run check"
+"test" = "npm test"
+
+[["tools"]]
+"name" = "node"
+"kind" = "cli"
+"command" = "node"
+
+[["tools"]]
+"name" = "npm"
+"kind" = "cli"
+"command" = "npm.cmd"

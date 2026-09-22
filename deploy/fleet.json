@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "host": {"name":"Alireza VPS","platform":"Ubuntu + Docker","edge":"Caddy","manager":"Deploy Manager"},
+  "manager": {"hostname":"deploy.alirezaafshan.com","port":9019,"repository":"YesterdaysLemon/deploy-manager","branch":"main","probeIntervalMs":30000,"probeTimeoutMs":2500},
+  "apps": [{
+    "id":"openwater","name":"Openwater","description":"An interactive ocean with sunlit shallows, sailing ships, rolling swells and passing storms.","kind":"aquarium",
+    "repository":"YesterdaysLemon/openwater","branch":"main","secretEnv":"OPENWATER_DEPLOY_WEBHOOK_SECRET",
+    "repoDir":"/opt/openwater/app","repoUser":"deploy-manager","imageName":"openwater","containerName":"openwater","candidateContainerName":"openwater-candidate",
+    "publicPort":3220,"candidatePort":3221,"containerPort":8080,"healthPath":"/healthz","hostname":"openwater.alirezaafshan.com"
+  }],
+  "datastores": []
+}

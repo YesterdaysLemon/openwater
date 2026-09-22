@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="theme-color" content="#071b28" />
+  <meta name="description" content="A little ocean to get lost in. Explore sunlit shallows, sailing ships, rolling swells, and passing storms in an interactive Three.js seascape." />
+  <title>Openwater — a little ocean</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+</head>
+<body>
+  <main id="app">
+    <canvas id="ocean" aria-label="Interactive ocean. Drag to look around, scroll to zoom, or tap the water to make a ripple." tabindex="0"></canvas>
+    <div id="loading" role="status"><span class="loader-wave">≈</span><h1>OPENWATER</h1><p>Finding the horizon…</p></div>
+    <div id="error" hidden role="alert"><h1>The ocean needs WebGL 2</h1><p>Try enabling hardware acceleration or opening this page in a current browser.</p><button onclick="location.reload()">Try again</button></div>
+    <header class="topbar ui">
+      <a class="brand" href="/" aria-label="Openwater home"><svg viewBox="0 0 32 24" fill="none" aria-hidden="true"><path d="M1 9C7 9 7 3 13 3S19 9 25 9H31M1 16C7 16 7 10 13 10S19 16 25 16H31M1 23C7 23 7 17 13 17S19 23 25 23H31" stroke="currentColor" stroke-width="1.5"/></svg><span>OPENWATER<small>A LITTLE OCEAN</small></span></a>
+      <nav class="views" aria-label="Scene"><button data-view="cove" aria-pressed="true">The cove</button><button data-view="sea" aria-pressed="false">Open sea</button><button data-view="sail" aria-pressed="false">Under sail</button></nav>
+      <div class="tools"><button id="sound" class="icon-button" aria-label="Enable ocean sound" aria-pressed="false" title="Ocean sound"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 9h4l5-4v14l-5-4H4zM17 8c3 2 3 6 0 8M20 5c5 4 5 10 0 14"/></svg></button><button id="settings-toggle" class="icon-button" aria-label="Show ocean controls" aria-expanded="false" aria-controls="settings" title="Ocean controls"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 7h16M4 17h16"/><circle cx="9" cy="7" r="3" fill="#102b36"/><circle cx="15" cy="17" r="3" fill="#102b36"/></svg></button></div>
+    </header>
+    <aside id="settings" class="panel ui" hidden aria-label="Ocean controls">
+      <div class="panel-title"><span>Make it your ocean</span><button id="settings-close" class="icon-button" aria-label="Close controls">×</button></div>
+      <label class="control" for="wind"><span>Wind <output id="wind-out">12 m/s</output></span><input id="wind" type="range" min="0" max="30" step="1" value="12" /></label>
+      <label class="control" for="swell"><span>Swell <output id="swell-out">1.2 m</output></span><input id="swell" type="range" min="0.15" max="3.5" step="0.05" value="1.2" /></label>
+      <label class="control" for="sun"><span>Sun height <output id="sun-out">35°</output></span><input id="sun" type="range" min="2" max="75" step="1" value="35" /></label>
+      <label class="control" for="foam"><span>Whitecaps <output id="foam-out">45%</output></span><input id="foam" type="range" min="0" max="1" step="0.01" value="0.45" /></label>
+      <label class="control" for="rain"><span>Rain <output id="rain-out">0%</output></span><input id="rain" type="range" min="0" max="1" step="0.01" value="0" /></label>
+      <label class="select-row" for="quality">Detail<select id="quality"><option value="balanced">Balanced</option><option value="high">High</option><option value="ultra">Ultra</option></select></label>
+      <label class="toggle-row">Sailing ship<input id="ship" type="checkbox" checked /></label>
+      <label class="toggle-row">Slow camera drift<input id="drift" type="checkbox" /></label>
+      <div class="panel-actions"><button id="reset">Reset view</button><button id="share">Copy this ocean ↗</button></div>
+      <p class="render-info"><span id="fps">—</span> fps <span>·</span> real-time WebGL</p>
+    </aside>
+    <div class="scene-caption ui"><span class="eyebrow" id="scene-kicker">01 / THE COVE</span><h1 id="scene-title">Somewhere,<br>off the map.</h1><p id="scene-description">Nothing to do. Just a sea to get lost in.</p></div>
+    <footer class="bottom ui">
+      <div class="weather" role="group" aria-label="Weather"><button data-weather="trade" aria-pressed="true"><span>☀</span>Trade winds</button><button data-weather="golden" aria-pressed="false"><span>◒</span>Golden hour</button><button data-weather="storm" aria-pressed="false"><span>☂</span>Storm</button><button data-weather="moon" aria-pressed="false"><span>☾</span>Moonlight</button></div>
+      <div class="bottom-line"><p class="hint"><span class="desktop-hint">Drag to explore <b>·</b> Scroll to move closer <b>·</b> </span>Tap the water to make a ripple</p><div class="utility"><button id="pause" aria-label="Pause ocean" aria-pressed="false">Pause</button><button id="capture">Postcard ↗</button><button id="hide" title="Hide interface (H)">Hide UI</button><button id="about-open" aria-label="About Openwater">ⓘ</button></div></div>
+    </footer>
+    <button id="restore" hidden aria-label="Show interface">Show controls</button>
+    <div id="toast" role="status" aria-live="polite"></div>
+    <dialog id="about"><button id="about-close" class="icon-button" aria-label="Close about">×</button><span class="eyebrow">A SMALL EXPERIMENT IN BIG WATER</span><h2>Meet you at the horizon.</h2><p>Openwater is an interactive ocean study, with an original layered wave shader, reflected skies, drifting foam, and a little ship finding its way.</p><p>Inspired by <a href="https://x.com/dangreenheck/status/2062278887388991549" target="_blank" rel="noopener">Dan Greenheck’s Water Pro V3</a>. Independently built; not affiliated with or using Water Pro.</p><div class="about-links"><a href="https://github.com/YesterdaysLemon/openwater" target="_blank" rel="noopener">Explore the source ↗</a><a href="https://alirezaafshan.com" target="_blank" rel="noopener">Alireza’s corner ↗</a></div><p class="shortcuts">H — hide controls · Space — pause · 1 / 2 / 3 — change view</p></dialog>
+  </main>
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
