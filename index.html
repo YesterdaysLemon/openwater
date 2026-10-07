@@ -6,11 +6,36 @@
   <meta name="theme-color" content="#071b28" />
   <meta name="description" content="A little ocean to get lost in. Explore sunlit shallows, sailing ships, rolling swells, and passing storms in an interactive Three.js seascape." />
   <title>Openwater — a little ocean</title>
+  <link rel="canonical" href="https://openwater.alirezaafshan.com/" />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://openwater.alirezaafshan.com/" />
+  <meta property="og:title" content="Openwater — a little ocean" />
+  <meta property="og:description" content="A tiny ocean to explore. Find a cove, follow a sailing ship, or let a storm roll in." />
+  <meta property="og:image" content="https://openwater.alirezaafshan.com/player-preview.png" />
+  <meta property="og:image:width" content="640" />
+  <meta property="og:image:height" content="480" />
+  <meta property="og:image:alt" content="A sailing ship beside a sunlit island in Openwater's interactive ocean." />
+  <meta name="twitter:card" content="player" />
+  <meta name="twitter:title" content="Openwater — a little ocean" />
+  <meta name="twitter:description" content="Change the weather, explore the coast, and tap the water for a ripple." />
+  <meta name="twitter:image" content="https://openwater.alirezaafshan.com/player-preview.png" />
+  <meta name="twitter:image:alt" content="A sailing ship beside a sunlit island in Openwater's interactive ocean." />
+  <meta name="twitter:player" content="https://openwater.alirezaafshan.com/embed" />
+  <meta name="twitter:player:width" content="640" />
+  <meta name="twitter:player:height" content="480" />
   <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <script>document.documentElement.dataset.embed = String(/^\/embed(?:\/|\/index\.html)?$/.test(location.pathname));</script>
 </head>
 <body>
   <main id="app">
     <canvas id="ocean" aria-label="Interactive ocean. Drag to look around, scroll to zoom, or tap the water to make a ripple." tabindex="0"></canvas>
+    <header class="embed-header embed-ui"><span>≈ <strong>OPENWATER</strong></span><a id="embed-full" href="/" target="_blank" rel="noopener">Open ocean ↗</a></header>
+    <div class="embed-controls embed-ui" aria-label="Ocean controls">
+      <label for="embed-view"><span>View</span><select id="embed-view"><option value="cove">The cove</option><option value="sea">Open sea</option><option value="sail">Under sail</option></select></label>
+      <label for="embed-weather"><span>Weather</span><select id="embed-weather"><option value="trade">Trade winds</option><option value="golden">Golden hour</option><option value="storm">Storm</option><option value="moon">Moonlight</option></select></label>
+      <button id="embed-pause" aria-label="Pause ocean" aria-pressed="false">Pause</button>
+      <p>Drag to explore · Tap the water for a ripple</p>
+    </div>
     <div id="loading" role="status"><span class="loader-wave">≈</span><h1>OPENWATER</h1><p>Finding the horizon…</p></div>
     <div id="error" hidden role="alert"><h1>The ocean needs WebGL 2</h1><p>Try enabling hardware acceleration or opening this page in a current browser.</p><button onclick="location.reload()">Try again</button></div>
     <header class="topbar ui">

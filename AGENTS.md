@@ -13,6 +13,9 @@ Project commands:
 - check: `npm run check`
 - test: `npm test`
 
+Project skills (load when relevant):
+- `rich-embed`: `.agents/skills/rich-embed/SKILL.md`. Claude's copy is mirrored in `.claude/skills`.
+
 Declared tools (verify availability in the intended agent):
 - node (cli): `node`.
 - npm (cli): `npm.cmd`.
@@ -33,3 +36,9 @@ Responsive behavior: size the renderer and pointer coordinates from the actual c
 Use global `frontend-quality` and `playwright` skills for interface work, `vps-operations` for delivery, and `credentials-access` if authentication is needed. Deployment goes through the existing Deploy Manager; the app uses openwater.alirezaafshan.com. Public source and this initial deployment are authorized by the creation request; subsequent unrelated publication follows its own request.
 
 Third-party asset provenance lives in `public/assets/README.md`. Reference footage remains excluded from Git and deployment. Never add paid Water Pro assets or code without a supplied license.
+
+## Rich embed
+
+`/embed` serves the same built HTML and ocean engine with compact view/weather selectors, pause, and an open-full link that preserves the selected conditions. The normal homepage carries the server-readable Player Card metadata and a real 640 by 480 screenshot at `public/player-preview.png`. Keep the view usable down to a 320 by 240 frame. The production Node server owns route normalization and the embed-only frame-ancestors policy for X/Twitter, the Galaxy homepage, and the portfolio; inspect the actual HTTP response when changing it. Do not add a second copy of the simulation or HTML just to provide the route.
+
+Embed acceptance includes a real sandboxed iframe, touch input, reduced motion, selected-state handoff, no compact controls on the ordinary homepage, and measured suspension of simulation and GPU work offscreen without clearing user pause. Use the global `rich-embed` skill. Card metadata, local iframe playback, deployment, and playback within an X post are separate verification states.

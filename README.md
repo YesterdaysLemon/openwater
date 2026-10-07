@@ -32,6 +32,12 @@ npm start
 
 The dev server runs on port 5173. Production runs on port 8080, with `/healthz` and `/version.json` providing release identity. The Dockerfile builds and serves the static site as a non-root user.
 
+## Compact player
+
+`/embed` opens the same ocean with just view, weather, pause, and an "Open ocean" link that carries those conditions into the full site. It uses a 4:3 preview, stays usable in narrow frames, and suspends the animation loop while offscreen. The homepage provides Open Graph and X Player Card metadata; the Node server permits the compact route to be framed by X/Twitter and Alireza's homepage/portfolio. Other parent sites need to be added deliberately.
+
+Interactive Player Cards depend on the destination client. A local working iframe and a successful card validator do not establish playback inside a published X post.
+
 ## Controls
 
 Drag to orbit; right-drag to pan; scroll or pinch to zoom. Tap water for a ripple. `1`, `2`, `3` change views, `Space` pauses, and `H` hides the interface. The sliders open from the upper-right controls button. “Copy this ocean” preserves the selected view, weather, custom conditions, and ship visibility in the URL.

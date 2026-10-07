@@ -139,3 +139,30 @@ dialog .icon-button { width: 40px; height: 40px; }
 }
 #app::before{content:'';position:absolute;inset:0;pointer-events:none;z-index:1;background:linear-gradient(180deg,#03152320 0%,transparent 15%,transparent 65%,#03192340 100%)}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+
+/* The same ocean, with a small control surface for an embedded viewport. */
+.embed-ui { display: none; }
+html[data-embed=true] .ui, html[data-embed=true] #restore { display: none !important; }
+html[data-embed=true] .embed-header {
+  display: flex; position: absolute; z-index: 2; top: 10px; left: 14px; right: 10px;
+  align-items: center; justify-content: space-between; gap: 12px; pointer-events: none;
+  text-shadow: 0 1px 12px #001826;
+}
+.embed-header > span { display: flex; align-items: center; gap: 9px; font-size: 30px; }
+.embed-header strong { font-size: 10px; font-weight: 600; letter-spacing: .2em; }
+.embed-header a { min-height: 44px; display: grid; place-items: center; padding: 0 12px; font-size: 11px; text-decoration: none; pointer-events: auto; background: #082638bc; border: 1px solid #d7f9ed30; border-radius: 24px; }
+html[data-embed=true] .embed-controls {
+  display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+  align-items: end; gap: 6px 8px; position: absolute; z-index: 2;
+  bottom: 10px; left: 10px; right: 10px; padding: 12px 12px 8px;
+  border: 1px solid #b8dfd130; border-radius: 14px; background: #082638ec;
+}
+.embed-controls label { min-width: 0; }
+.embed-controls label > span { display: block; font-size: 10px; color: #b9d3d7; padding: 0 3px 5px; }
+.embed-controls select, .embed-controls button { min-height: 44px; border: 1px solid #d5f1e936; border-radius: 7px; background: #173d4b; color: #f4f8f5; font-size: 12px; }
+.embed-controls select { display: block; width: 100%; min-width: 0; padding: 0 6px; }
+.embed-controls button { min-width: 62px; padding: 0 9px; }
+.embed-controls button[aria-pressed=true] { background: #cbe6dc; color: #12333f; }
+.embed-controls p { grid-column: 1 / -1; text-align: center; font-size: 10px; color: #b9d3d7; margin: 2px 0 0; }
+html[data-embed=true] #toast { bottom: 128px; }
+@media (max-height: 300px) { .embed-controls p { display: none; } html[data-embed=true] .embed-controls { bottom: 6px; padding: 7px; } }

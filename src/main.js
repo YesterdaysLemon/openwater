@@ -8,6 +8,8 @@ import './style.css';
 
 const $ = s => document.querySelector(s);
 const state = readState(location.search);
+const embedded = document.documentElement.dataset.embed === 'true';
+if (embedded) state.quality = 'balanced';
 const reduced = matchMedia('(prefers-reduced-motion: reduce)');
 let paused = reduced.matches, elapsed = 14, drift = false, sound = null;
 let toastTimer, frames = 0, fpsStart = performance.now(), stopped = false;
@@ -57,11 +59,13 @@ async function boot() {
   if(instant){camera.position.copy(targetCamera);controls.target.copy(targetLook);controls.update();}else moving=true;
   document.querySelectorAll('[data-view]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.view===view)));
   $('#scene-kicker').textContent=config.kicker;$('#scene-title').innerHTML=config.title;$('#scene-description').textContent=config.description;
+  $('#embed-view').value=view;updateEmbedLink();
  }
  function updateControls(){
   for(const key of Object.keys(ranges)){$('#'+key).value=state[key];updateOutput(key);}
   document.querySelectorAll('[data-weather]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.weather===state.weather)));
   $('#ship').checked=state.ship;$('#quality').value=state.quality;
+  $('#embed-weather').value=state.weather;updateEmbedLink();
  }
  function updateOutput(key){
   const v=state[key];const value=key==='wind'?`${v} m/s`:key==='swell'?`${v.toFixed(2).replace(/0$/,'')} m`:key==='sun'?`${v}°`:`${Math.round(v*100)}%`;
@@ -70,6 +74,8 @@ async function boot() {
  setView(state.view,true);updateControls();
  document.querySelectorAll('[data-view]').forEach(b=>b.addEventListener('click',()=>setView(b.dataset.view)));
  document.querySelectorAll('[data-weather]').forEach(b=>b.addEventListener('click',()=>{Object.assign(state,presets[b.dataset.weather],{weather:b.dataset.weather});updateControls();}));
+ $('#embed-view').addEventListener('change',e=>setView(e.target.value));
+ $('#embed-weather').addEventListener('change',e=>{Object.assign(state,presets[e.target.value],{weather:e.target.value});updateControls();});
  for(const key of Object.keys(ranges))$('#'+key).addEventListener('input',e=>{state[key]=Number(e.target.value);updateOutput(key);});
  $('#ship').addEventListener('change',e=>{state.ship=e.target.checked;});
  $('#drift').addEventListener('change',e=>{drift=e.target.checked;});
@@ -91,11 +97,16 @@ async function boot() {
  });
  canvas.addEventListener('pointercancel',e=>{pointers.delete(e.pointerId);down=null;});
  controls.addEventListener('start',()=>moving=false);
- let last=performance.now();
+ let last=performance.now(),animationFrame=0,inViewport=true,hasRendered=false;
+ function syncActivity(){
+  cancelAnimationFrame(animationFrame);animationFrame=0;
+  last=performance.now();frames=0;fpsStart=last;
+  if(!stopped&&!document.hidden&&inViewport)animationFrame=requestAnimationFrame(tick);
+  if(sound){if(document.hidden||!inViewport)sound.ctx.suspend();else sound.ctx.resume();}
+ }
  function tick(now){
-  if(stopped)return;
-  requestAnimationFrame(tick);
-  if(document.hidden){last=now;return;}
+  animationFrame=0;
+  if(stopped||document.hidden||!inViewport)return;
   const dt=Math.min((now-last)/1000,.05);last=now;
   if(!paused)elapsed+=dt;
   shared.time.value=elapsed;
@@ -113,12 +124,16 @@ async function boot() {
   scene.environmentIntensity=.65*(1-state.night*.9)*(1-state.cloud*.45);
   ocean.uniforms.uShip.value.set(world.ship.position.x,world.ship.position.z,world.ship.rotation.y,state.ship?1:0);
   renderer.render(scene,camera);
+  if(!hasRendered){hasRendered=true;$('#loading').style.opacity='0';setTimeout(()=>$('#loading').hidden=true,850);}
   frames++;
   if(now-fpsStart>1300){$('#fps').textContent=Math.round(frames*1000/(now-fpsStart));frames=0;fpsStart=now;}
+  animationFrame=requestAnimationFrame(tick);
  }
  renderer.compile(scene,camera);
- requestAnimationFrame(tick);
- requestAnimationFrame(()=>{renderer.render(scene,camera);$('#loading').style.opacity='0';setTimeout(()=>$('#loading').hidden=true,850);});
+ const intersectionObserver=new IntersectionObserver(entries=>{inViewport=entries[0].isIntersecting;syncActivity();});
+ intersectionObserver.observe(viewport);
+ document.addEventListener('visibilitychange',syncActivity);
+ syncActivity();
  const resizeObserver=new ResizeObserver(()=>{
   const nextWidth=viewport.clientWidth,nextHeight=viewport.clientHeight;
   if(!nextWidth||!nextHeight||(nextWidth===width&&nextHeight===height))return;
@@ -145,7 +160,7 @@ async function boot() {
  document.addEventListener('keydown',e=>{
   if(e.target.matches('input,select,button')||$('#about').open)return;
   if(e.code==='Space'){e.preventDefault();togglePause();}
-  if(e.key.toLowerCase()==='h')toggleUI();
+  if(e.key.toLowerCase()==='h'&&!embedded)toggleUI();
   if(['1','2','3'].includes(e.key))setView(['cove','sea','sail'][Number(e.key)-1]);
  });
  // Read-only diagnostics for checking the real running scene, including shader failure reports.
@@ -157,16 +172,19 @@ async function boot() {
   }
   return {left,right,top,bottom};
  }
- window.openwater={getState:()=>({...state,paused,time:elapsed,drawCalls:renderer.info.render.calls,triangles:renderer.info.render.triangles,pixelRatio:renderer.getPixelRatio(),camera:camera.position.toArray(),target:controls.target.toArray(),viewport:{width,height,aspect:camera.aspect,framing},bounds:{ship:screenBounds(world.ship),island:screenBounds(world.island)}})};
+ window.openwater={getState:()=>({...state,embedded,paused,active:!stopped&&!document.hidden&&inViewport,time:elapsed,drawCalls:renderer.info.render.calls,triangles:renderer.info.render.triangles,pixelRatio:renderer.getPixelRatio(),camera:camera.position.toArray(),target:controls.target.toArray(),viewport:{width,height,aspect:camera.aspect,framing},bounds:{ship:screenBounds(world.ship),island:screenBounds(world.island)}})};
 }
 
+function updateEmbedLink(){const url=new URL('/',location.href);url.search=writeState(state);$('#embed-full').href=url.href;}
 function toast(message){clearTimeout(toastTimer);$('#toast').textContent=message;$('#toast').classList.add('visible');toastTimer=setTimeout(()=>$('#toast').classList.remove('visible'),2600);}
 function toggleSettings(open){$('#settings').hidden=!open;$('#settings-toggle').setAttribute('aria-expanded',String(open));$('#settings-toggle').setAttribute('aria-label',open?'Hide ocean controls':'Show ocean controls');}
 $('#settings-toggle').addEventListener('click',()=>toggleSettings($('#settings').hidden));
 $('#settings-close').addEventListener('click',()=>{toggleSettings(false);$('#settings-toggle').focus();});
 function togglePause(){paused=!paused;updatePause();}
-function updatePause(){$('#pause').textContent=paused?'Resume':'Pause';$('#pause').setAttribute('aria-label',paused?'Resume ocean':'Pause ocean');$('#pause').setAttribute('aria-pressed',String(paused));if(sound)sound.gain.gain.setTargetAtTime(paused?0:.18,sound.ctx.currentTime,.4);}
+function updatePause(){for(const button of [$('#pause'),$('#embed-pause')]){button.textContent=paused?'Resume':'Pause';button.setAttribute('aria-label',paused?'Resume ocean':'Pause ocean');button.setAttribute('aria-pressed',String(paused));}if(sound)sound.gain.gain.setTargetAtTime(paused?0:.18,sound.ctx.currentTime,.4);}
 $('#pause').addEventListener('click',togglePause);updatePause();
+$('#embed-pause').addEventListener('click',togglePause);
+reduced.addEventListener('change',()=>{if(reduced.matches){paused=true;updatePause();}});
 function toggleUI(){const hidden=$('#app').classList.toggle('no-ui');$('#restore').hidden=!hidden;}
 $('#hide').addEventListener('click',toggleUI);$('#restore').addEventListener('click',toggleUI);
 $('#about-open').addEventListener('click',()=>$('#about').showModal());$('#about-close').addEventListener('click',()=>$('#about').close());
